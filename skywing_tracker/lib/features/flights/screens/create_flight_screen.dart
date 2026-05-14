@@ -14,6 +14,8 @@ import 'package:skywing_tracker/features/flights/providers/flight_provider.dart'
 import 'package:skywing_tracker/features/pigeons/providers/pigeon_provider.dart';
 import 'package:skywing_tracker/features/pigeons/models/pigeon.dart';
 
+enum _MapMode { start, finish }
+
 class CreateFlightScreen extends ConsumerStatefulWidget {
   const CreateFlightScreen({super.key});
 
@@ -29,6 +31,9 @@ class _CreateFlightScreenState extends ConsumerState<CreateFlightScreen> {
   String? _locationName;
   String? _weatherJson;
   bool _fetchingWeather = false;
+  _MapMode _mapMode = _MapMode.start;
+  LatLng? _finishLocation;
+  String _finishLocationName = '';
   final Set<String> _selectedPigeonIds = {};
   bool _saving = false;
 
@@ -42,15 +47,24 @@ class _CreateFlightScreenState extends ConsumerState<CreateFlightScreen> {
   }
 
   Future<void> _onMapTap(LatLng pos) async {
-    setState(() {
-      _selectedLocation = pos;
-      _locationName =
-          '${pos.latitude.toStringAsFixed(4)}, '
-          '${pos.longitude.toStringAsFixed(4)}';
-      _fetchingWeather = true;
-      _weatherJson = null;
-    });
-    await _fetchWeather(pos.latitude, pos.longitude);
+    if (_mapMode == _MapMode.start) {
+      setState(() {
+        _selectedLocation = pos;
+        _locationName =
+            '${pos.latitude.toStringAsFixed(4)}, '
+            '${pos.longitude.toStringAsFixed(4)}';
+        _fetchingWeather = true;
+        _weatherJson = null;
+      });
+      await _fetchWeather(pos.latitude, pos.longitude);
+    } else {
+      setState(() {
+        _finishLocation = pos;
+        _finishLocationName =
+            '${pos.latitude.toStringAsFixed(4)}, '
+            '${pos.longitude.toStringAsFixed(4)}';
+      });
+    }
   }
 
   Future<void> _fetchWeather(double lat, double lon) async {
@@ -90,9 +104,13 @@ class _CreateFlightScreenState extends ConsumerState<CreateFlightScreen> {
 
   Future<void> _createFlight(List<Pigeon> allPigeons) async {
     if (!_formKey.currentState!.validate()) return;
-    if (_selectedLocation == null) {
+    if (_selectedLocation == null || _finishLocation == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a release location')),
+        const SnackBar(
+          content: Text(
+            'Please set both start and finish locations on the map',
+          ),
+        ),
       );
       return;
     }
@@ -121,6 +139,9 @@ class _CreateFlightScreenState extends ConsumerState<CreateFlightScreen> {
         releaseLatitude: _selectedLocation!.latitude,
         releaseLongitude: _selectedLocation!.longitude,
         releaseLocationName: _locationName,
+        finishLatitude: _finishLocation!.latitude,
+        finishLongitude: _finishLocation!.longitude,
+        finishLocationName: _finishLocationName,
         weatherConditions: _weatherJson,
         createdAt: now,
         updatedAt: now,
@@ -238,8 +259,105 @@ class _CreateFlightScreenState extends ConsumerState<CreateFlightScreen> {
 
             // Map location picker
             const Text(
-              'Release Location',
+              'Locations',
               style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+            ),
+            const SizedBox(height: 8),
+            // Mode toggle
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _mapMode = _MapMode.start),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        color: _mapMode == _MapMode.start
+                            ? Colors.red.withValues(alpha: 0.15)
+                            : AppColors.card,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: _mapMode == _MapMode.start
+                              ? Colors.red
+                              : AppColors.divider,
+                          width: _mapMode == _MapMode.start ? 2 : 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.flag_outlined,
+                            color: _mapMode == _MapMode.start
+                                ? Colors.red
+                                : AppColors.textSecondary,
+                            size: 16,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Set Start',
+                            style: TextStyle(
+                              color: _mapMode == _MapMode.start
+                                  ? Colors.red
+                                  : AppColors.textPrimary,
+                              fontWeight: _mapMode == _MapMode.start
+                                  ? FontWeight.w700
+                                  : FontWeight.normal,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _mapMode = _MapMode.finish),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        color: _mapMode == _MapMode.finish
+                            ? Colors.green.withValues(alpha: 0.15)
+                            : AppColors.card,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: _mapMode == _MapMode.finish
+                              ? Colors.green
+                              : AppColors.divider,
+                          width: _mapMode == _MapMode.finish ? 2 : 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.sports_score_outlined,
+                            color: _mapMode == _MapMode.finish
+                                ? Colors.green
+                                : AppColors.textSecondary,
+                            size: 16,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Set Finish',
+                            style: TextStyle(
+                              color: _mapMode == _MapMode.finish
+                                  ? Colors.green
+                                  : AppColors.textPrimary,
+                              fontWeight: _mapMode == _MapMode.finish
+                                  ? FontWeight.w700
+                                  : FontWeight.normal,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 8),
             ClipRRect(
@@ -253,17 +371,24 @@ class _CreateFlightScreenState extends ConsumerState<CreateFlightScreen> {
                   ),
                   onMapCreated: (c) => _mapController = c,
                   onTap: _onMapTap,
-                  markers: _selectedLocation != null
-                      ? {
-                          Marker(
-                            markerId: const MarkerId('release'),
-                            position: _selectedLocation!,
-                            icon: BitmapDescriptor.defaultMarkerWithHue(
-                              BitmapDescriptor.hueRed,
-                            ),
-                          ),
-                        }
-                      : {},
+                  markers: {
+                    if (_selectedLocation != null)
+                      Marker(
+                        markerId: const MarkerId('release'),
+                        position: _selectedLocation!,
+                        icon: BitmapDescriptor.defaultMarkerWithHue(
+                          BitmapDescriptor.hueRed,
+                        ),
+                      ),
+                    if (_finishLocation != null)
+                      Marker(
+                        markerId: const MarkerId('finish'),
+                        position: _finishLocation!,
+                        icon: BitmapDescriptor.defaultMarkerWithHue(
+                          BitmapDescriptor.hueGreen,
+                        ),
+                      ),
+                  },
                   myLocationButtonEnabled: false,
                   zoomControlsEnabled: true,
                 ),
@@ -278,6 +403,14 @@ class _CreateFlightScreenState extends ConsumerState<CreateFlightScreen> {
                     color: AppColors.textSecondary,
                     fontSize: 12,
                   ),
+                ),
+              ),
+            if (_finishLocation != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 4, bottom: 8),
+                child: Text(
+                  'Finish: $_finishLocationName',
+                  style: const TextStyle(color: Colors.green, fontSize: 12),
                 ),
               ),
             const SizedBox(height: 16),
