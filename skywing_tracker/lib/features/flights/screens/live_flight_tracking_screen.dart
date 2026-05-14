@@ -84,6 +84,7 @@ class _LiveFlightTrackingScreenState
       await repo.updateFlight(flight.copyWith(endTime: now));
     } catch (_) {
       if (mounted) {
+        setState(() => _savingArrival = false);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Could not save arrival time. Please try again.'),
