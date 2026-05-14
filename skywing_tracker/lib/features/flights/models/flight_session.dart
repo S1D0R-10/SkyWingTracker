@@ -15,6 +15,9 @@ class FlightSession {
   final String? releaseLocationName;
   final double? loftLatitude;
   final double? loftLongitude;
+  final double? finishLatitude;
+  final double? finishLongitude;
+  final String? finishLocationName;
   final String? weatherConditions;
   final String? notes;
   final DateTime createdAt;
@@ -33,6 +36,9 @@ class FlightSession {
     this.releaseLocationName,
     this.loftLatitude,
     this.loftLongitude,
+    this.finishLatitude,
+    this.finishLongitude,
+    this.finishLocationName,
     this.weatherConditions,
     this.notes,
     required this.createdAt,
@@ -65,6 +71,13 @@ class FlightSession {
       loftLongitude: json['loft_longitude'] != null
           ? (json['loft_longitude'] as num).toDouble()
           : null,
+      finishLatitude: json['finish_latitude'] != null
+          ? (json['finish_latitude'] as num).toDouble()
+          : null,
+      finishLongitude: json['finish_longitude'] != null
+          ? (json['finish_longitude'] as num).toDouble()
+          : null,
+      finishLocationName: json['finish_location_name'] as String?,
       weatherConditions: json['weather_conditions'] as String?,
       notes: json['notes'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
@@ -86,6 +99,9 @@ class FlightSession {
       'release_location_name': releaseLocationName,
       'loft_latitude': loftLatitude,
       'loft_longitude': loftLongitude,
+      'finish_latitude': finishLatitude,
+      'finish_longitude': finishLongitude,
+      'finish_location_name': finishLocationName,
       'weather_conditions': weatherConditions,
       'notes': notes,
       'created_at': createdAt.toIso8601String(),
@@ -106,6 +122,9 @@ class FlightSession {
     String? releaseLocationName,
     double? loftLatitude,
     double? loftLongitude,
+    double? finishLatitude,
+    double? finishLongitude,
+    String? finishLocationName,
     String? weatherConditions,
     String? notes,
     DateTime? createdAt,
@@ -124,6 +143,9 @@ class FlightSession {
       releaseLocationName: releaseLocationName ?? this.releaseLocationName,
       loftLatitude: loftLatitude ?? this.loftLatitude,
       loftLongitude: loftLongitude ?? this.loftLongitude,
+      finishLatitude: finishLatitude ?? this.finishLatitude,
+      finishLongitude: finishLongitude ?? this.finishLongitude,
+      finishLocationName: finishLocationName ?? this.finishLocationName,
       weatherConditions: weatherConditions ?? this.weatherConditions,
       notes: notes ?? this.notes,
       createdAt: createdAt ?? this.createdAt,
