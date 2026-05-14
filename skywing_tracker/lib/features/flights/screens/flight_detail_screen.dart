@@ -381,63 +381,53 @@ class _ParticipantTile extends StatelessWidget {
   }
 }
 
-class _ActionButtons extends StatelessWidget {
+class _ActionButtons extends ConsumerStatefulWidget {
   final String flightId;
   final FlightSession flight;
   const _ActionButtons({required this.flightId, required this.flight});
 
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: () => context.go('/flights/$flightId/map'),
-            icon: const Icon(Icons.map_outlined),
-            label: const Text('View Map'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.textPrimary,
-              side: const BorderSide(color: AppColors.divider),
-              padding: const EdgeInsets.symmetric(vertical: 14),
-            ),
+  ConsumerState<_ActionButtons> createState() => _ActionButtonsState();
+}
+
+class _ActionButtonsState extends ConsumerState<_ActionButtons> {
+  bool _ending = false;
+
+  Future<void> _endFlight() async {
+    setState(() => _ending = true);
+    try {
+      final repo = ref.read(flightRepositoryProvider);
+      final updated = widget.flight.copyWith(
+        status: FlightStatus.returned,
+        endTime: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+      await repo.updateFlight(updated);
+      ref.invalidate(flightByIdProvider(widget.flightId));
+      ref.invalidate(flightsProvider);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Flight ended'),
+            backgroundColor: AppColors.success,
           ),
-        ),
-        const SizedBox(height: 10),
-        if (flight.status == FlightStatus.released) ...[
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () => context.go('/flights/$flightId/live'),
-              icon: const Icon(Icons.radar),
-              label: const Text('View Live Tracking'),
-            ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: AppColors.error,
           ),
-          const SizedBox(height: 10),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: () => _confirmEndFlight(context),
-              icon: const Icon(
-                Icons.stop_circle_outlined,
-                color: AppColors.error,
-              ),
-              label: const Text(
-                'End Flight',
-                style: TextStyle(color: AppColors.error),
-              ),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: AppColors.error),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-              ),
-            ),
-          ),
-        ],
-      ],
-    );
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _ending = false);
+    }
   }
 
-  void _confirmEndFlight(BuildContext context) {
+  void _confirmEndFlight() {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -458,12 +448,72 @@ class _ActionButtons extends StatelessWidget {
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
-              // TODO: call updateFlight with ended status
+              _endFlight();
             },
             child: const Text('End', style: TextStyle(color: AppColors.error)),
           ),
         ],
       ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: () => context.go('/flights/${widget.flightId}/map'),
+            icon: const Icon(Icons.map_outlined),
+            label: const Text('View Map'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.textPrimary,
+              side: const BorderSide(color: AppColors.divider),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        if (widget.flight.status == FlightStatus.released) ...[
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => context.go('/flights/${widget.flightId}/live'),
+              icon: const Icon(Icons.radar),
+              label: const Text('View Live Tracking'),
+            ),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _ending ? null : _confirmEndFlight,
+              icon: _ending
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.error,
+                      ),
+                    )
+                  : const Icon(
+                      Icons.stop_circle_outlined,
+                      color: AppColors.error,
+                    ),
+              label: const Text(
+                'End Flight',
+                style: TextStyle(color: AppColors.error),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: AppColors.error),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

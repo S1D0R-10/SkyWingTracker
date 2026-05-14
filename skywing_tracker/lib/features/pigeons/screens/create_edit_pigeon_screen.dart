@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 import 'package:skywing_tracker/core/theme.dart';
+import 'package:skywing_tracker/core/supabase_client.dart';
 import 'package:skywing_tracker/features/pigeons/models/pigeon.dart';
 import 'package:skywing_tracker/features/pigeons/providers/pigeon_provider.dart';
 
@@ -119,9 +120,10 @@ class _CreateEditPigeonScreenState
         );
         await repository.updatePigeon(updated);
       } else {
+        final currentUserId = supabase.auth.currentUser?.id ?? '';
         final pigeon = Pigeon(
           id: const Uuid().v4(),
-          ownerId: '',
+          ownerId: currentUserId,
           ringNumber: _ringNumberController.text.trim(),
           name: _nameController.text.trim(),
           sex: _selectedSex,

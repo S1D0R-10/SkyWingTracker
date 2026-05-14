@@ -127,6 +127,20 @@ class FlightRepository {
     }
   }
 
+  Future<FlightParticipant> insertParticipant(FlightParticipant p) async {
+    final response = await supabase
+        .from('flight_participants')
+        .insert(p.toJson())
+        .select()
+        .single();
+
+    final created = FlightParticipant.fromJson(
+      response as Map<String, dynamic>,
+    );
+    await participantsBox.put(created.id, jsonEncode(created.toJson()));
+    return created;
+  }
+
   Future<FlightParticipant> updateParticipant(FlightParticipant p) async {
     final response = await supabase
         .from('flight_participants')

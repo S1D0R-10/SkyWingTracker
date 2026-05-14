@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:uuid/uuid.dart';
 import 'package:skywing_tracker/core/theme.dart';
 import 'package:skywing_tracker/core/constants.dart';
+import 'package:skywing_tracker/core/supabase_client.dart';
 import 'package:skywing_tracker/features/flights/models/flight_session.dart';
 import 'package:skywing_tracker/features/flights/models/flight_participant.dart';
 import 'package:skywing_tracker/features/flights/providers/flight_provider.dart';
@@ -109,9 +110,10 @@ class _CreateFlightScreenState extends ConsumerState<CreateFlightScreen> {
       final now = DateTime.now();
       const uuid = Uuid();
 
+      final currentUserId = supabase.auth.currentUser?.id ?? '';
       final flight = FlightSession(
         id: uuid.v4(),
-        ownerId: '',
+        ownerId: currentUserId,
         name: _nameController.text.trim(),
         type: _selectedType,
         status: FlightStatus.released,
@@ -140,7 +142,7 @@ class _CreateFlightScreenState extends ConsumerState<CreateFlightScreen> {
           pigeonRingNumber: pigeon.ringNumber,
           status: FlightStatus.released,
         );
-        await repo.updateParticipant(participant);
+        await repo.insertParticipant(participant);
       }
 
       ref.invalidate(flightsProvider);
