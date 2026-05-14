@@ -6,6 +6,7 @@ import 'package:skywing_tracker/core/theme.dart';
 import 'package:skywing_tracker/features/flights/models/flight_session.dart';
 import 'package:skywing_tracker/features/flights/models/flight_participant.dart';
 import 'package:skywing_tracker/features/flights/providers/flight_provider.dart';
+import 'package:skywing_tracker/features/analytics/providers/analytics_provider.dart';
 import 'package:skywing_tracker/features/flights/repositories/flight_repository.dart';
 import 'package:skywing_tracker/shared/utils/haversine.dart';
 
@@ -82,6 +83,9 @@ class _LiveFlightTrackingScreenState
 
     try {
       await repo.updateFlight(flight.copyWith(endTime: now));
+      final analyticsRepo = ref.read(analyticsRepositoryProvider);
+      await analyticsRepo.invalidateCache();
+      ref.invalidate(analyticsDataProvider);
     } catch (_) {
       if (mounted) {
         setState(() => _savingArrival = false);

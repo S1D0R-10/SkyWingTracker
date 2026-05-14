@@ -280,6 +280,12 @@ Format with markdown headers.
     return 'Failed to fetch AI insights. Please try again later.';
   }
 
+  Future<void> invalidateCache() async {
+    final box = analyticsBox;
+    await box.delete(_cacheTsKey);
+    await box.delete(_cacheKey);
+  }
+
   double _haversine(double lat1, double lon1, double lat2, double lon2) {
     const r = 6371.0;
     final dLat = _toRad(lat2 - lat1);
