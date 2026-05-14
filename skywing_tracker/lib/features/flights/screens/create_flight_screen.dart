@@ -33,7 +33,7 @@ class _CreateFlightScreenState extends ConsumerState<CreateFlightScreen> {
   bool _fetchingWeather = false;
   _MapMode _mapMode = _MapMode.start;
   LatLng? _finishLocation;
-  String _finishLocationName = '';
+  String? _finishLocationName;
   final Set<String> _selectedPigeonIds = {};
   bool _saving = false;
 
@@ -409,7 +409,7 @@ class _CreateFlightScreenState extends ConsumerState<CreateFlightScreen> {
               Padding(
                 padding: const EdgeInsets.only(top: 4, bottom: 8),
                 child: Text(
-                  'Finish: $_finishLocationName',
+                  'Finish: ${_finishLocationName ?? ''}',
                   style: const TextStyle(color: Colors.green, fontSize: 12),
                 ),
               ),
